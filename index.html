@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Base Planner</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brandMark"></div>
+        <div>
+          <h1>Base Planner</h1>
+          <p>Drag colored 3x3 bases on the white map.</p>
+        </div>
+      </header>
+
+      <section class="boardShell">
+        <div class="mapWrap">
+          <div class="zoomHint">Two-finger scroll to pan, pinch to zoom</div>
+          <div id="boardViewport" class="boardViewport">
+            <div id="boardScaler" class="boardScaler">
+              <div id="board" class="board" aria-label="Base layout board">
+                <div class="axis xAxis"></div>
+                <div class="axis yAxis"></div>
+                <div id="baseLayer" class="baseLayer"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidePanel">
+          <section class="rosterPanel">
+            <h2>Names</h2>
+            <form id="nameForm" class="nameForm">
+              <input id="nameInput" type="text" placeholder="Base name" maxlength="28">
+              <button type="submit">Add</button>
+            </form>
+            <label class="importButton">
+              Import Excel
+              <input id="spreadsheetInput" type="file" accept=".xlsx,.xlsm" hidden>
+            </label>
+            <div id="importStatus" class="importStatus"></div>
+            <div id="nameList" class="nameList"></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="jszip.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
