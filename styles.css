@@ -266,7 +266,9 @@ input {
 }
 
 .nameForm button,
-.importButton {
+.importButton,
+.saveTools button,
+.saveTools label {
   height: 38px;
   border: 0;
   border-radius: 6px;
@@ -284,6 +286,24 @@ input {
   margin-bottom: 8px;
   background: #ebe3d6;
   color: var(--ink);
+}
+
+.saveTools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.saveTools button,
+.saveTools label {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  font-size: 13px;
 }
 
 .importStatus {

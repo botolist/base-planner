@@ -7,6 +7,8 @@ const nameForm = document.querySelector("#nameForm");
 const nameInput = document.querySelector("#nameInput");
 const spreadsheetInput = document.querySelector("#spreadsheetInput");
 const importStatus = document.querySelector("#importStatus");
+const saveConfig = document.querySelector("#saveConfig");
+const loadConfig = document.querySelector("#loadConfig");
 
 const tile = 18;
 const boardCols = 999;
@@ -308,6 +310,87 @@ function addName(name) {
   renderRoster();
 }
 
+function saveState() {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    map: { cols: boardCols, rows: boardRows },
+    roster,
+    bases: bases.map((base) => ({
+      id: base.id,
+      rosterId: base.rosterId,
+      name: base.name,
+      color: base.color,
+      x: base.x,
+      y: base.y,
+      coordinate: coordinateFor(base),
+    })),
+  };
+}
+
+function downloadJson(data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+  link.href = URL.createObjectURL(blob);
+  link.download = `base-planner-${date}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function normalizeLoadedState(data) {
+  const loadedRoster = Array.isArray(data?.roster) ? data.roster : [];
+  const loadedBases = Array.isArray(data?.bases) ? data.bases : [];
+  const rosterIds = new Set();
+
+  roster = loadedRoster
+    .filter((person) => person && person.name)
+    .map((person) => {
+      const id = String(person.id || crypto.randomUUID());
+      rosterIds.add(id);
+      return {
+        id,
+        name: String(person.name),
+        color: String(person.color || defaultBaseColor),
+      };
+    });
+
+  bases = loadedBases
+    .filter((base) => base && base.name && Number.isFinite(Number(base.x)) && Number.isFinite(Number(base.y)))
+    .map((base) => {
+      const rosterId = String(base.rosterId || base.id || crypto.randomUUID());
+      if (!rosterIds.has(rosterId)) {
+        rosterIds.add(rosterId);
+        roster.push({
+          id: rosterId,
+          name: String(base.name),
+          color: String(base.color || defaultBaseColor),
+        });
+      }
+
+      return {
+        id: String(base.id || crypto.randomUUID()),
+        rosterId,
+        name: String(base.name),
+        color: String(base.color || defaultBaseColor),
+        x: clamp(snapToTile(Number(base.x)), 0, boardCols * tile - baseSize),
+        y: clamp(snapToTile(Number(base.y)), 0, boardRows * tile - baseSize),
+      };
+    })
+    .filter((base, index, list) => {
+      const duplicate = list.some((other, otherIndex) => otherIndex < index && !(
+        base.x + baseSize <= other.x ||
+        base.x >= other.x + baseSize ||
+        base.y + baseSize <= other.y ||
+        base.y >= other.y + baseSize
+      ));
+      return !duplicate && !overlapsRect(base.x, base.y, blockedCore);
+    });
+
+  selectedId = null;
+  render();
+}
+
 function xmlDoc(text) {
   return new DOMParser().parseFromString(text, "application/xml");
 }
@@ -461,6 +544,24 @@ spreadsheetInput.addEventListener("change", async () => {
     importStatus.textContent = "Could not read this Excel file.";
   } finally {
     spreadsheetInput.value = "";
+  }
+});
+
+saveConfig.addEventListener("click", () => {
+  downloadJson(saveState());
+});
+
+loadConfig.addEventListener("change", async () => {
+  const file = loadConfig.files?.[0];
+  if (!file) return;
+
+  try {
+    normalizeLoadedState(JSON.parse(await file.text()));
+    importStatus.textContent = `Loaded ${roster.length} names and ${bases.length} bases.`;
+  } catch {
+    importStatus.textContent = "Could not load this JSON file.";
+  } finally {
+    loadConfig.value = "";
   }
 });
 
